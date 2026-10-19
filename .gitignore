@@ -1,0 +1,11 @@
+*.o
+*.ko
+*.mod
+*.mod.c
+*.order
+*.symvers
+*.cmd
+*.cpio
+*.cpio.gz
+build/
+linux-*/

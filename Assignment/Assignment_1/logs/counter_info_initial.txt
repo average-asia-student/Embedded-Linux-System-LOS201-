@@ -1,0 +1,3 @@
+counter=0
+read_count=0
+write_count=0

@@ -1,0 +1,3 @@
+counter=100
+read_count=2
+write_count=1

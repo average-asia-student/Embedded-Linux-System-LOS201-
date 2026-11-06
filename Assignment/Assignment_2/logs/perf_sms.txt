@@ -1,0 +1,683 @@
+Task 3 perf capture: host x86_64; test-only LD_PRELOAD sensor mock; app runtime 35 seconds
+kernel.perf_event_paranoid=1
+CapEff=0000000000000000
+perf version: perf version 7.0.14
+Command: perf record -g -e cpu-clock -o output/qemu-integration/perf_sms.data -- env LD_PRELOAD=... app/sms_app_x86 -i 500 -d 35
+
+WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,
+check /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.
+
+Samples in kernel functions may not be resolved if a suitable vmlinux
+file is not found in the buildid cache or in the vmlinux path.
+
+Samples in kernel modules won't be resolved at all.
+
+If some relocation was applied (e.g. kexec) symbols may be misresolved
+even with a suitable vmlinux or kallsyms file.
+
+Couldn't record kernel reference relocation symbol
+Symbol resolution may be skewed if relocation was used (e.g. kexec).
+Check /proc/kallsyms permission or run as root.
+SMS application running: interval=500 ms, duration=35 s
+SMS summary: uptime=35 s processed=71 buffered=71 consumed=71 buffer_overflow=0 alerts={TEMP_HIGH:0,HUMID_HIGH:0,TEMP_SPIKE:0}
+[ perf record: Woken up 1 times to write data ]
+[ perf record: Captured and wrote 0.015 MB output/qemu-integration/perf_sms.data (96 samples) ]
+
+perf record exit=0 elapsed_wall_seconds=36
+
+===== perf report --stdio (self overhead, host symbols) =====
+# To display the perf.data header info, please use --header/--header-only options.
+#
+Warning:
+Kernel address maps (/proc/{kallsyms,modules}) were restricted.
+
+Check /proc/sys/kernel/kptr_restrict before running 'perf record'.
+
+As no suitable kallsyms nor vmlinux was found, kernel samples
+can't be resolved.
+
+Samples in kernel modules can't be resolved as well.
+
+#
+# Total Lost Samples: 0
+#
+# Samples: 96  of event 'cpu-clock'
+# Event count (approx.): 24000000
+#
+# Overhead  Symbol                                 Shared Object        Command      IPC   [IPC Coverage]
+# ........  .....................................  ...................  ...........  ....................
+#
+    11.46%  [.] main                               sms_app_x86          sms_app_x86  -      -            
+            |
+            ---0x4044000000000000
+
+     8.33%  [.] __syscall_cancel                   libc.so.6            sms_app_x86  -      -            
+            |
+            ---__syscall_cancel
+               |          
+               |--7.29%--__sigtimedwait
+               |          main
+               |          0x4044000000000000
+               |          
+                --1.04%--mq_timedreceive@@GLIBC_2.34
+                          app_queue_receive
+
+     5.21%  [.] __syscall_cancel_arch_end          libc.so.6            sms_app_x86  -      -            
+            |          
+            |--2.08%--mq_timedreceive@@GLIBC_2.34
+            |          app_queue_receive
+            |          
+            |--1.04%--clock_nanosleep@GLIBC_2.2.5
+            |          sensor_thread_main
+            |          0x4044000000000000
+            |          
+            |--1.04%--__sigtimedwait
+            |          main
+            |          0x4044000000000000
+            |          
+             --1.04%--__futex_abstimed_wait_common (inlined)
+                       __GI___futex_abstimed_wait_cancelable64
+                       __pthread_cond_wait_common (inlined)
+                       pthread_cond_wait@@GLIBC_2.3.2
+                       circular_buffer_pop
+                       0x100000000
+
+     4.17%  [.] __errno_location@plt               sms_app_x86          sms_app_x86  -      -            
+            |          
+             --3.12%--0x4044000000000000
+
+     4.17%  [.] clock_gettime@@GLIBC_2.17          libc.so.6            sms_app_x86  -      -            
+            |          
+             --3.12%--0x4044000000000000
+
+     4.17%  [k] 0xffffffff954a088e                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff96741bb6
+               0xffffffff96741f87
+               |          
+               |--2.08%--0xffffffff9674a228
+               |          0xffffffff9674a293
+               |          0xffffffff9545e258
+               |          0xffffffff95463c67
+               |          0xffffffff953496e8
+               |          0xffffffff96731b85
+               |          0xffffffff9500012b
+               |          __syscall_cancel_arch_end
+               |          __sigtimedwait
+               |          main
+               |          0x4044000000000000
+               |          
+                --2.08%--0xffffffff955a17f8
+                          0xffffffff955a203c
+                          0xffffffff955a213b
+                          0xffffffff9559d992
+                          0xffffffff9559e0a0
+                          0xffffffff953494ae
+                          0xffffffff96731b85
+                          0xffffffff9500012b
+                          __syscall_cancel_arch_end
+                          __futex_abstimed_wait_common (inlined)
+                          __GI___futex_abstimed_wait_cancelable64
+                          __pthread_cond_wait_common (inlined)
+                          pthread_cond_wait@@GLIBC_2.3.2
+                          circular_buffer_pop
+                          0x100000000
+
+     3.12%  [.] pthread_mutex_lock@@GLIBC_2.2.5    libc.so.6            sms_app_x86  -      -            
+            |
+            ---0x4044000000000000
+
+     3.12%  [.] sensor_thread_main                 sms_app_x86          sms_app_x86  -      -            
+            |
+            ---0x4044000000000000
+
+     3.12%  [k] 0xffffffff954a086b                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff96741bb6
+               0xffffffff96741f87
+               0xffffffff9674a228
+               0xffffffff9674a293
+               0xffffffff9545e258
+               0xffffffff95463c67
+               0xffffffff953496e8
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               __sigtimedwait
+               main
+               0x4044000000000000
+
+     2.08%  [.] _IO_no_init                        libc.so.6            sms_app_x86  -      -            
+            |
+            ---parse_offset
+               __tzset_parse_tz
+               __tzfile_compute
+               __tz_convert
+               format_realtime_timestamp
+               0x31333a3931543630
+
+     2.08%  [.] __read_chk                         host_sensor_mock.so  sms_app_x86  -      -            
+            |
+            ---0x4044000000000000
+
+     2.08%  [.] __strftime_internal                libc.so.6            sms_app_x86  -      -            
+            |
+            ---__strftime_l
+               format_realtime_timestamp
+               0x31333a3931543630
+
+     2.08%  [k] 0xffffffff95cf0ac0                 [unknown]            sms_app_x86  -      -            
+            |          
+            |--1.04%--0xffffffff95b096e6
+            |          0xffffffff95348ffe
+            |          0xffffffff96731b85
+            |          0xffffffff9500012b
+            |          __syscall_cancel_arch_end
+            |          mq_timedreceive@@GLIBC_2.34
+            |          app_queue_receive
+            |          
+             --1.04%--0xffffffff953496e8
+                       0xffffffff96731b85
+                       0xffffffff9500012b
+                       __syscall_cancel_arch_end
+                       __sigtimedwait
+                       main
+                       0x4044000000000000
+
+     2.08%  [k] 0xffffffff9674198c                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff96741f87
+               0xffffffff9674a228
+               0xffffffff9674a293
+               0xffffffff9545e258
+               0xffffffff95463c67
+               0xffffffff953496e8
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               __sigtimedwait
+               main
+               0x4044000000000000
+
+     2.08%  [k] 0xffffffff9674c591                 [unknown]            sms_app_x86  -      -            
+            |          
+            |--1.04%--0xffffffff95578d35
+            |          0xffffffff95578eab
+            |          0xffffffff9674a21c
+            |          0xffffffff95b08f00
+            |          0xffffffff95b09392
+            |          0xffffffff95b09718
+            |          0xffffffff95348ffe
+            |          0xffffffff96731b85
+            |          0xffffffff9500012b
+            |          __syscall_cancel_arch_end
+            |          mq_timedreceive@@GLIBC_2.34
+            |          app_queue_receive
+            |          
+             --1.04%--0xffffffff954abc67
+                       0xffffffff95444c15
+                       0xffffffff95445317
+                       0xffffffff95445386
+                       0xffffffff953498b9
+                       0xffffffff96731b85
+                       0xffffffff9500012b
+                       __GI___clone3
+                       create_thread
+                       internal_signal_restore_set (inlined)
+                       pthread_create@GLIBC_2.2.5
+                       main
+                       0x4044000000000000
+
+     1.04%  [.] __GI_____strtod_l_internal         libc.so.6            sms_app_x86  -      -            
+            |
+            ---sensor_thread_main
+               0x4044000000000000
+
+     1.04%  [.] __memmove_avx_unaligned_erms       libc.so.6            sms_app_x86  -      -            
+            |
+            ---__printf_buffer
+               __printf_buffer_snprintf_done (inlined)
+               __vsnprintf_internal
+               __snprintf_chk
+               format_realtime_timestamp
+               0x31333a3931543630
+
+     1.04%  [.] __printf_buffer_write              libc.so.6            sms_app_x86  -      -            
+            |
+            ---__printf_buffer
+               __printf_buffer_snprintf_done (inlined)
+               __vsnprintf_internal
+               __snprintf_chk
+               read
+
+     1.04%  [.] __printf_fp_buffer_1.isra.0        libc.so.6            sms_app_x86  -      -            
+            |
+            ---__printf_fp_l_buffer
+               __printf_buffer
+               __vfprintf_internal
+               __fprintf_chk
+               logger_thread_main
+               0x6a31b1
+
+     1.04%  [.] __sigtimedwait                     libc.so.6            sms_app_x86  -      -            
+            |
+            ---main
+               0x4044000000000000
+
+     1.04%  [.] __tz_convert                       libc.so.6            sms_app_x86  -      -            
+            |
+            ---format_realtime_timestamp
+               0x31333a3931543630
+
+     1.04%  [.] __vdso_clock_gettime               [vdso]               sms_app_x86  -      -            
+            |
+            ---app_queue_send
+
+     1.04%  [.] __vfscanf_internal                 libc.so.6            sms_app_x86  -      -            
+            |
+            ---__isoc23_sscanf
+               parse_offset
+               __tzset_parse_tz
+               __tzfile_compute
+               __tz_convert
+               format_realtime_timestamp
+               0x31333a3931543630
+
+     1.04%  [.] _int_realloc                       libc.so.6            env          -      -            
+            |
+            ---realloc
+               0x6251a9457bbf
+               0x6251a9457ce9
+               0x6251a968dddf
+               0x6251a969bf62
+               0x6251a98a034b
+               0x6251a98a0660
+               0x6251a94d1770
+               0x6251a9520978
+               0x6251a94db2c7
+               0x6251a94db216
+               0x6251a9675f5d
+               0x6251a94db204
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main@@GLIBC_2.34
+               0x6251a9465005
+
+     1.04%  [.] app_queue_receive                  sms_app_x86          sms_app_x86  -      -            
+     1.04%  [.] circular_buffer_pop                sms_app_x86          sms_app_x86  -      -            
+            |
+            ---0x10000f56c
+
+     1.04%  [.] circular_buffer_push               sms_app_x86          sms_app_x86  -      -            
+            |
+            ---0x4044000000000000
+
+     1.04%  [.] pthread_cond_wait@@GLIBC_2.3.2     libc.so.6            sms_app_x86  -      -            
+            |
+            ---__condvar_load_g1_start_relaxed (inlined)
+               __pthread_cond_wait_common (inlined)
+               pthread_cond_wait@@GLIBC_2.3.2
+               circular_buffer_pop
+               0x100000000
+
+     1.04%  [.] pthread_mutex_unlock@@GLIBC_2.2.5  libc.so.6            sms_app_x86  -      -            
+            |
+            ---pthread_mutex_unlock@@GLIBC_2.2.5
+
+     1.04%  [.] tzset_internal                     libc.so.6            sms_app_x86  -      -            
+            |
+            ---format_realtime_timestamp
+               0x31333a3931543630
+
+     1.04%  [.] 0x00000000000009b0                 [vdso]               sms_app_x86  -      -            
+            |
+            ---main
+               0x4044000000000000
+
+     1.04%  [.] 0x0000000000181ba9                 env                  env          -      -            
+            |
+            ---0x6251a94f8eca
+               0x6251a95209be
+               0x6251a94db2c7
+               0x6251a94db216
+               0x6251a9675f5d
+               0x6251a94db204
+               __libc_start_call_main
+               call_init (inlined)
+               __libc_start_main@@GLIBC_2.34
+               0x6251a9465005
+
+     1.04%  [k] 0xffffffff95419148                 [unknown]            env          -      -            
+            |
+            ---0xffffffff9673a443
+               0xffffffff95000bb7
+               elf_machine_rela_relative (inlined)
+               elf_dynamic_do_Rela (inlined)
+               _dl_relocate_object_no_relro
+               _dl_protect_relro (inlined)
+               _dl_relocate_object
+               dl_main
+               _dl_sysdep_start
+               _dl_start_final (inlined)
+               _dl_start
+               _dl_start_user
+
+     1.04%  [k] 0xffffffff957e82c0                 [unknown]            env          -      -            
+            |
+            ---0xffffffff9582c568
+               0xffffffff9582cfed
+               0xffffffff9582d204
+               0xffffffff9582e9fc
+               0xffffffff95830b52
+               0xffffffff9580cc78
+               0xffffffff957ca279
+               0xffffffff9580bac3
+               0xffffffff953aa696
+               0xffffffff95349ae4
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __mmap64 (inlined)
+               mmap64
+               _dl_map_segments (inlined)
+               _dl_map_object_from_fd
+               _dl_map_new_object
+               openaux
+               set_catch (inlined)
+               __GI__dl_catch_exception (inlined)
+               _dl_map_object_deps
+               rtld_timer_stop (inlined)
+               rtld_timer_accum (inlined)
+               dl_main
+               _dl_sysdep_start
+               _dl_start_final (inlined)
+               _dl_start
+               _dl_start_user
+
+     1.04%  [k] 0xffffffff9581d52c                 [unknown]            env          -      -            
+            |
+            ---0xffffffff957fc1f0
+               0xffffffff957fc8b5
+               0xffffffff957fcf1e
+               0xffffffff957fd6ea
+               0xffffffff957fd926
+               0xffffffff957fda55
+               0xffffffff9580dd4b
+               0xffffffff95441d35
+               0xffffffff95441ea1
+               0xffffffff958f7533
+               0xffffffff958fa1e8
+               0xffffffff959a2035
+               0xffffffff958f7d2c
+               0xffffffff958f8090
+               0xffffffff958f817a
+               0xffffffff958f9b5b
+               0xffffffff958f9e6e
+               0xffffffff95348783
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __GI___execve
+
+     1.04%  [k] 0xffffffff967047c4                 [unknown]            env          -      -            
+            |
+            ---0xffffffff9670bd92
+               0xffffffff96710721
+               0xffffffff967118f2
+               0xffffffff96711fd8
+               0xffffffff9582c8f6
+               0xffffffff9582d071
+               0xffffffff9582da9d
+               0xffffffff9582f930
+               0xffffffff958120d3
+               0xffffffff958126ae
+               0xffffffff9581295f
+               0xffffffff95348f8a
+               0xffffffff96731b85
+               0xffffffff9500012b
+               mprotect
+               dl_main
+               _dl_sysdep_start
+               _dl_start_final (inlined)
+               _dl_start
+               _dl_start_user
+
+     1.04%  [k] 0xffffffff9674c591                 [unknown]            env          -      -            
+            |
+            ---0xffffffff957a1ae2
+               0xffffffff957a1c04
+               0xffffffff957a1cf9
+               0xffffffff957a25cf
+               0xffffffff957ff9ce
+               0xffffffff957ffc62
+               0xffffffff958005a7
+               0xffffffff958059b1
+               0xffffffff95805f03
+               0xffffffff9580628e
+               0xffffffff9541936e
+               0xffffffff9673a443
+               0xffffffff95000bb7
+               elf_machine_rela_relative (inlined)
+               elf_dynamic_do_Rela (inlined)
+               _dl_relocate_object_no_relro
+               _dl_protect_relro (inlined)
+               _dl_relocate_object
+               dl_main
+               _dl_sysdep_start
+               _dl_start_final (inlined)
+               _dl_start
+               _dl_start_user
+
+     1.04%  [k] 0xffffffff95348095                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               clock_nanosleep@GLIBC_2.2.5
+               sensor_thread_main
+               0x4044000000000000
+
+     1.04%  [k] 0xffffffff95419148                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff9673a443
+               0xffffffff95000bb7
+               __GI___tunables_init
+               _dl_sysdep_start
+               _dl_start_final (inlined)
+               _dl_start
+               _dl_start_user
+
+     1.04%  [k] 0xffffffff9541d110                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff958dde06
+               0xffffffff95afae07
+               0xffffffff95b09e0b
+               0xffffffff95b0a375
+               0xffffffff95349c97
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               mq_timedsend@@GLIBC_2.34
+               app_queue_send
+
+     1.04%  [k] 0xffffffff95463c20                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff953496e8
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               __sigtimedwait
+               main
+               0x4044000000000000
+
+     1.04%  [k] 0xffffffff955a1fa0                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff9559d992
+               0xffffffff9559e0a0
+               0xffffffff953494ae
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               __futex_abstimed_wait_common (inlined)
+               __GI___futex_abstimed_wait_cancelable64
+               __pthread_cond_wait_common (inlined)
+               pthread_cond_wait@@GLIBC_2.3.2
+               circular_buffer_pop
+               0x100000000
+
+     1.04%  [k] 0xffffffff95856745                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff95afad85
+               0xffffffff95b09e0b
+               0xffffffff95b0a375
+               0xffffffff95349c97
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               mq_timedsend@@GLIBC_2.34
+               app_queue_send
+
+     1.04%  [k] 0xffffffff95856750                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff95afad85
+               0xffffffff95b09e0b
+               0xffffffff95b0a375
+               0xffffffff95349c97
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               mq_timedsend@@GLIBC_2.34
+               app_queue_send
+
+     1.04%  [k] 0xffffffff958c0fff                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff958c1e4e
+               0xffffffff958c40d9
+               0xffffffff958c498d
+               0xffffffff95856ba9
+               0xffffffff95afad85
+               0xffffffff95b09e0b
+               0xffffffff95b0a375
+               0xffffffff95349c97
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               mq_timedsend@@GLIBC_2.34
+               app_queue_send
+
+     1.04%  [k] 0xffffffff958c4984                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff95855c42
+               0xffffffff957f4254
+               0xffffffff9582ce4f
+               0xffffffff9582da9d
+               0xffffffff9582f930
+               0xffffffff958120d3
+               0xffffffff958126ae
+               0xffffffff9581295f
+               0xffffffff95348f8a
+               0xffffffff96731b85
+               0xffffffff9500012b
+               mprotect
+               dl_main
+               _dl_sysdep_start
+               _dl_start_final (inlined)
+               _dl_start
+               _dl_start_user
+
+     1.04%  [k] 0xffffffff958c4cec                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff95852ac7
+               0xffffffff95afb111
+               0xffffffff95b09354
+               0xffffffff95b09718
+               0xffffffff95348ffe
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               mq_timedreceive@@GLIBC_2.34
+               app_queue_receive
+
+     1.04%  [k] 0xffffffff9591fac6                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff95b09718
+               0xffffffff95348ffe
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               mq_timedreceive@@GLIBC_2.34
+               app_queue_receive
+
+     1.04%  [k] 0xffffffff95afb03d                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff95b09343
+               0xffffffff95b09718
+               0xffffffff95348ffe
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               mq_timedreceive@@GLIBC_2.34
+               app_queue_receive
+
+     1.04%  [k] 0xffffffff95b09696                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               mq_timedreceive@@GLIBC_2.34
+               app_queue_receive
+
+     1.04%  [k] 0xffffffff95b28eda                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff95b351b5
+               0xffffffff95afaedd
+               0xffffffff95b09e0b
+               0xffffffff95b0a375
+               0xffffffff95349c97
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               mq_timedsend@@GLIBC_2.34
+               app_queue_send
+
+     1.04%  [k] 0xffffffff95cf0ae4                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff9557160b
+               0xffffffff95463c52
+               0xffffffff953496e8
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               __sigtimedwait
+               main
+               0x4044000000000000
+
+     1.04%  [k] 0xffffffff9674a1e4                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff95b08f00
+               0xffffffff95b09392
+               0xffffffff95b09718
+               0xffffffff95348ffe
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               mq_timedreceive@@GLIBC_2.34
+               app_queue_receive
+
+     1.04%  [k] 0xffffffff9674a1e8                 [unknown]            sms_app_x86  -      -            
+            |
+            ---0xffffffff95b08f00
+               0xffffffff95b09392
+               0xffffffff95b09718
+               0xffffffff95348ffe
+               0xffffffff96731b85
+               0xffffffff9500012b
+               __syscall_cancel_arch_end
+               mq_timedreceive@@GLIBC_2.34
+               app_queue_receive
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#
+
+perf report --no-children exit=0

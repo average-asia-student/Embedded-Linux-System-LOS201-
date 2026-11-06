@@ -1,0 +1,117 @@
+Breakpoint 1 at 0x6646: file app/circular_buffer.c, line 115.
+Breakpoint 2 at 0x6502: file app/circular_buffer.c, line 90.
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <https://debuginfod.ubuntu.com>
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/usr/lib/x86_64-linux-gnu/libthread_db.so.1".
+[New Thread 0x7ffff7bff6c0 (LWP 58490)]
+[New Thread 0x7ffff73fe6c0 (LWP 58491)]
+[New Thread 0x7ffff6bfd6c0 (LWP 58492)]
+[Switching to Thread 0x7ffff6bfd6c0 (LWP 58492)]
+
+=== GDB PROCESSOR circular_buffer_pop breakpoint ===
+thread at pop: [Current thread is 4 (Thread 0x7ffff6bfd6c0 (LWP 58492))]
+buffer head/tail/size/capacity: $1 = 0
+$2 = 0
+$3 = 0
+$4 = 64
+mutex and condition state:
+$5 = {__data = {__lock = 0, __count = 0, __owner = 0, __nusers = 0, __kind = 0, __spins = 0, __unused = 0, __list = {__prev = 0x0, __next = 0x0}}, __size = '\000' <repeats 39 times>, __align = 0}
+$6 = {__data = {__wseq = {__value64 = 0, __value32 = {__low = 0, __high = 0}}, __g1_start = {__value64 = 0, __value32 = {__low = 0, __high = 0}}, __g_size = {0, 0}, __g1_orig_size = 0, __wrefs = 0, __g_signals = {0, 0}, __unused_initialized_1 = 0, __unused_initialized_2 = 0}, __size = '\000' <repeats 47 times>, __align = 0}
+  Id   Target Id                                           Frame 
+  1    Thread 0x7ffff7f98740 (LWP 58487) "sms_app_x86_deb" __GI___clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:62
+  2    Thread 0x7ffff7bff6c0 (LWP 58490) "sms_app_x86_deb" __syscall_cancel_arch () at ../sysdeps/unix/sysv/linux/x86_64/syscall_cancel.S:56
+  3    Thread 0x7ffff73fe6c0 (LWP 58491) "sms_app_x86_deb" __syscall_cancel_arch () at ../sysdeps/unix/sysv/linux/x86_64/syscall_cancel.S:56
+* 4    Thread 0x7ffff6bfd6c0 (LWP 58492) "sms_app_x86_deb" circular_buffer_pop (buffer=0x55555555f010, sample=0x7ffff6bfcd90) at app/circular_buffer.c:115
+
+Thread 4 (Thread 0x7ffff6bfd6c0 (LWP 58492) "sms_app_x86_deb"):
+#0  circular_buffer_pop (buffer=0x55555555f010, sample=0x7ffff6bfcd90) at app/circular_buffer.c:115
+#1  0x000055555555845b in processor_thread_main (argument=0x7fffffffd4d0) at app/processor_thread.c:87
+#2  0x00007ffff7ca3dfa in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:454
+#3  0x00007ffff7d375cc in __GI___clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 3 (Thread 0x7ffff73fe6c0 (LWP 58491) "sms_app_x86_deb"):
+#0  __syscall_cancel_arch () at ../sysdeps/unix/sysv/linux/x86_64/syscall_cancel.S:56
+#1  0x00007ffff7ca039c in __internal_syscall_cancel (a1=<optimized out>, a2=<optimized out>, a3=<optimized out>, a4=<optimized out>, a5=<optimized out>, a6=0, nr=243) at ./nptl/cancellation.c:49
+#2  __syscall_cancel (a1=<optimized out>, a2=<optimized out>, a3=<optimized out>, a4=<optimized out>, a5=<optimized out>, a6=a6@entry=0, nr=243) at ./nptl/cancellation.c:75
+#3  0x00007ffff7caff3c in ___mq_timedreceive_time64 (mqdes=<optimized out>, msg_ptr=<optimized out>, msg_len=<optimized out>, msg_prio=<optimized out>, abs_timeout=<optimized out>) at ../sysdeps/unix/sysv/linux/mq_timedreceive.c:35
+#4  0x0000555555559979 in app_queue_receive (queue=3, message=0x7ffff73fde20, message_size=40) at app/message_queue.c:164
+
+Thread 2 (Thread 0x7ffff7bff6c0 (LWP 58490) "sms_app_x86_deb"):
+#0  __syscall_cancel_arch () at ../sysdeps/unix/sysv/linux/x86_64/syscall_cancel.S:56
+#1  0x00007ffff7ca039c in __internal_syscall_cancel (a1=<optimized out>, a2=<optimized out>, a3=<optimized out>, a4=<optimized out>, a5=<optimized out>, a6=0, nr=243) at ./nptl/cancellation.c:49
+#2  __syscall_cancel (a1=<optimized out>, a2=<optimized out>, a3=<optimized out>, a4=<optimized out>, a5=<optimized out>, a6=a6@entry=0, nr=243) at ./nptl/cancellation.c:75
+#3  0x00007ffff7caff3c in ___mq_timedreceive_time64 (mqdes=<optimized out>, msg_ptr=<optimized out>, msg_len=<optimized out>, msg_prio=<optimized out>, abs_timeout=<optimized out>) at ../sysdeps/unix/sysv/linux/mq_timedreceive.c:35
+#4  0x0000555555559979 in app_queue_receive (queue=4, message=0x7ffff7bfed10, message_size=64) at app/message_queue.c:164
+
+Thread 1 (Thread 0x7ffff7f98740 (LWP 58487) "sms_app_x86_deb"):
+#0  __GI___clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:62
+#1  0x00007ffff7d374de in __clone3_internal (cl_args=0x7fffffffd0e0, func=0x7ffff7ca3b00 <start_thread>, arg=0x7ffff63fc6c0) at ../sysdeps/unix/sysv/linux/clone-internal.c:82
+#2  __GI___clone_internal (cl_args=cl_args@entry=0x7fffffffd0e0, func=func@entry=0x7ffff7ca3b00 <start_thread>, arg=arg@entry=0x7ffff63fc6c0) at ../sysdeps/unix/sysv/linux/clone-internal.c:100
+#3  0x00007ffff7ca3905 in create_thread (pd=pd@entry=0x7ffff63fc6c0, attr=attr@entry=0x7fffffffd1f0, stopped_start=stopped_start@entry=0x7fffffffd1e6, stackaddr=stackaddr@entry=0x7ffff5bfc000, stacksize=<optimized out>, thread_ran=thread_ran@entry=0x7fffffffd1e7) at ./nptl/pthread_create.c:298
+#4  0x00007ffff7ca462e in __pthread_create_2_1 (newthread=<optimized out>, attr=<optimized out>, start_routine=<optimized out>, arg=<optimized out>) at ./nptl/pthread_create.c:863
+Mode for locking scheduler during execution is "on".
+[New Thread 0x7ffff63fc6c0 (LWP 58493)]
+[Switching to Thread 0x7ffff63fc6c0 (LWP 58493)]
+
+=== GDB SENSOR circular_buffer_push breakpoint ===
+thread at push: [Current thread is 5 (Thread 0x7ffff63fc6c0 (LWP 58493))]
+buffer head/tail/size/capacity before push lock: $7 = 0
+$8 = 0
+$9 = 0
+$10 = 64
+  Id   Target Id                                           Frame 
+  1    Thread 0x7ffff7f98740 (LWP 58487) "sms_app_x86_deb" __syscall_cancel_arch () at ../sysdeps/unix/sysv/linux/x86_64/syscall_cancel.S:56
+  2    Thread 0x7ffff7bff6c0 (LWP 58490) "sms_app_x86_deb" __syscall_cancel_arch () at ../sysdeps/unix/sysv/linux/x86_64/syscall_cancel.S:56
+  3    Thread 0x7ffff73fe6c0 (LWP 58491) "sms_app_x86_deb" __syscall_cancel_arch () at ../sysdeps/unix/sysv/linux/x86_64/syscall_cancel.S:56
+  4    Thread 0x7ffff6bfd6c0 (LWP 58492) "sms_app_x86_deb" __syscall_cancel_arch () at ../sysdeps/unix/sysv/linux/x86_64/syscall_cancel.S:56
+* 5    Thread 0x7ffff63fc6c0 (LWP 58493) "sms_app_x86_deb" circular_buffer_push (buffer=0x55555555f010, sample=0x7ffff63fbdc0) at app/circular_buffer.c:90
+
+Thread 5 (Thread 0x7ffff63fc6c0 (LWP 58493) "sms_app_x86_deb"):
+#0  circular_buffer_push (buffer=0x55555555f010, sample=0x7ffff63fbdc0) at app/circular_buffer.c:90
+#1  0x0000555555557ea0 in sensor_thread_main (argument=0x7fffffffd4d0) at app/sensor_thread.c:175
+#2  0x00007ffff7ca3dfa in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:454
+#3  0x00007ffff7d375cc in __GI___clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 4 (Thread 0x7ffff6bfd6c0 (LWP 58492) "sms_app_x86_deb"):
+#0  __syscall_cancel_arch () at ../sysdeps/unix/sysv/linux/x86_64/syscall_cancel.S:56
+#1  0x00007ffff7ca030c in __internal_syscall_cancel (a1=a1@entry=93824992276640, a2=<optimized out>, a3=a3@entry=0, a4=a4@entry=0, a5=a5@entry=0, a6=a6@entry=4294967295, nr=202) at ./nptl/cancellation.c:49
+#2  0x00007ffff7ca06e7 in __futex_abstimed_wait_common64 (private=0, futex_word=0x55555555f0a0, expected=0, op=393, abstime=0x0, cancel=true) at ./nptl/futex-internal.c:57
+#3  __futex_abstimed_wait_common (futex_word=0x55555555f0a0, expected=0, clockid=0, abstime=0x0, private=0, cancel=true) at ./nptl/futex-internal.c:87
+#4  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x55555555f0a0, expected=expected@entry=0, clockid=clockid@entry=0, abstime=abstime@entry=0x0, private=private@entry=0) at ./nptl/futex-internal.c:139
+
+Thread 3 (Thread 0x7ffff73fe6c0 (LWP 58491) "sms_app_x86_deb"):
+#0  __syscall_cancel_arch () at ../sysdeps/unix/sysv/linux/x86_64/syscall_cancel.S:56
+#1  0x00007ffff7ca039c in __internal_syscall_cancel (a1=<optimized out>, a2=<optimized out>, a3=<optimized out>, a4=<optimized out>, a5=<optimized out>, a6=0, nr=243) at ./nptl/cancellation.c:49
+#2  __syscall_cancel (a1=<optimized out>, a2=<optimized out>, a3=<optimized out>, a4=<optimized out>, a5=<optimized out>, a6=a6@entry=0, nr=243) at ./nptl/cancellation.c:75
+#3  0x00007ffff7caff3c in ___mq_timedreceive_time64 (mqdes=<optimized out>, msg_ptr=<optimized out>, msg_len=<optimized out>, msg_prio=<optimized out>, abs_timeout=<optimized out>) at ../sysdeps/unix/sysv/linux/mq_timedreceive.c:35
+#4  0x0000555555559979 in app_queue_receive (queue=3, message=0x7ffff73fde20, message_size=40) at app/message_queue.c:164
+
+Thread 2 (Thread 0x7ffff7bff6c0 (LWP 58490) "sms_app_x86_deb"):
+#0  __syscall_cancel_arch () at ../sysdeps/unix/sysv/linux/x86_64/syscall_cancel.S:56
+#1  0x00007ffff7ca039c in __internal_syscall_cancel (a1=<optimized out>, a2=<optimized out>, a3=<optimized out>, a4=<optimized out>, a5=<optimized out>, a6=0, nr=243) at ./nptl/cancellation.c:49
+#2  __syscall_cancel (a1=<optimized out>, a2=<optimized out>, a3=<optimized out>, a4=<optimized out>, a5=<optimized out>, a6=a6@entry=0, nr=243) at ./nptl/cancellation.c:75
+#3  0x00007ffff7caff3c in ___mq_timedreceive_time64 (mqdes=<optimized out>, msg_ptr=<optimized out>, msg_len=<optimized out>, msg_prio=<optimized out>, abs_timeout=<optimized out>) at ../sysdeps/unix/sysv/linux/mq_timedreceive.c:35
+#4  0x0000555555559979 in app_queue_receive (queue=4, message=0x7ffff7bfed10, message_size=64) at app/message_queue.c:164
+
+Thread 1 (Thread 0x7ffff7f98740 (LWP 58487) "sms_app_x86_deb"):
+#0  __syscall_cancel_arch () at ../sysdeps/unix/sysv/linux/x86_64/syscall_cancel.S:56
+#1  0x00007ffff7ca039c in __internal_syscall_cancel (a1=<optimized out>, a2=140737488343600, a3=<optimized out>, a4=8, a5=0, a6=0, nr=128) at ./nptl/cancellation.c:49
+#2  __syscall_cancel (a1=<optimized out>, a2=a2@entry=140737488343600, a3=<optimized out>, a4=a4@entry=8, a5=a5@entry=0, a6=a6@entry=0, nr=128) at ./nptl/cancellation.c:75
+#3  0x00007ffff7c46875 in __GI___sigtimedwait (set=<optimized out>, info=0x7fffffffd230, timeout=<optimized out>) at ../sysdeps/unix/sysv/linux/sigtimedwait.c:31
+#4  0x0000555555556c6a in wait_for_stop_or_signal (context=0x7fffffffd4d0, signal_set=0x7fffffffd3b0, start_time=0x7fffffffd330) at app/sms_app.c:149
+[Thread 0x7ffff6bfd6c0 (LWP 58492) exited]
+[Thread 0x7ffff73fe6c0 (LWP 58491) exited]
+[Thread 0x7ffff63fc6c0 (LWP 58493) exited]
+[Thread 0x7ffff7bff6c0 (LWP 58490) exited]
+SMS application running: interval=500 ms, duration=3 s
+SMS summary: uptime=3 s processed=7 buffered=7 consumed=7 buffer_overflow=0 alerts={TEMP_HIGH:0,HUMID_HIGH:0,TEMP_SPIKE:0}
+[Inferior 1 (process 58487) exited normally]
+
+=== GDB SESSION COMPLETE ===
+No threads.
+
+GDB wrapper exit=0

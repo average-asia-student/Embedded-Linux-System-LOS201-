@@ -1,0 +1,50 @@
+Valgrind host run: sms_app_x86 with test-only LD_PRELOAD sensor shim
+Valgrind: valgrind-3.26.0
+Command: valgrind --trace-children=yes --leak-check=full --show-leak-kinds=all --track-origins=yes --num-callers=24; sms_app_x86 -i 500 -d 35
+The shim supplies valid CSV and handles SMS_SET_INTERVAL; application and driver sources are unchanged.
+Wall start epoch: 1793967028
+
+
+Application output:
+SMS application running: interval=500 ms, duration=35 s
+SMS summary: uptime=35 s processed=70 buffered=70 consumed=70 buffer_overflow=0 alerts={TEMP_HIGH:0,HUMID_HIGH:0,TEMP_SPIKE:0}
+
+Valgrind report:
+==52015== Memcheck, a memory error detector
+==52015== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
+==52015== Using Valgrind-3.26.0 and LibVEX; rerun with -h for copyright info
+==52015== Command: /home/elaina/embedded_assignment2/app/sms_app_x86 -i 500 -d 35
+==52015== Parent PID: 52011
+==52015== 
+==52015== 
+==52015== HEAP SUMMARY:
+==52015==     in use at exit: 0 bytes in 0 blocks
+==52015==   total heap usage: 18 allocs, 18 frees, 16,290 bytes allocated
+==52015== 
+==52015== All heap blocks were freed -- no leaks are possible
+==52015== 
+==52015== For lists of detected and suppressed errors, rerun with: -s
+==52015== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+
+Test wrapper status: exit=0 elapsed_wall_seconds=36
+
+Leak-kind analysis:
+  definitely lost: 0 bytes / 0 blocks
+  indirectly lost: 0 bytes / 0 blocks
+  possibly lost: 0 bytes / 0 blocks
+  still reachable: 0 bytes / 0 blocks
+  Total in use at exit: 0 bytes / 0 blocks
+
+The final Memcheck process tracked sms_app_x86 after exec (not the shell
+wrapper). The app ran for 35 seconds, processed 70 mock sensor samples,
+drained its circular buffer, joined all workers, and exited with status 0.
+The sensor shim is test-only and does not exercise the real kernel driver;
+real ARM ioctl and driver behavior is recorded separately in the QEMU logs.
+
+An initial wrapper attempt used the environment's Rust coreutils `env`, which
+Valgrind could not start as a child; that attempt exited immediately and is
+not counted as a test. The successful run uses bash to set LD_PRELOAD before
+exec and `--trace-children=yes`; its complete Valgrind report is above.
+
+Task 2 Valgrind result: PASS for this host application path. No application
+source changes were made.

@@ -1,0 +1,97 @@
+ASSIGNMENT-02 Task 4 - Real-Time Scheduling & Jitter Analysis
+Date: 2026-11-06
+
+Measurement setup
+-----------------
+- Target: ARMv7 Linux 5.15.0 guest in QEMU vexpress-a9 (TCG virtualization),
+  256 MiB RAM, one emulated Cortex-A9 CPU.
+- Jitter is recorded in app/sensor_thread.c by the Sensor Thread. Each sample
+  stores the absolute CLOCK_MONOTONIC deadline passed to
+  clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, ...) and the monotonic time
+  read immediately after a successful wake-up. Jitter is wakeup - deadline.
+- The test used -i 10 -d 40 and SMS_JITTER_CSV. The optional instrumentation
+  collected the first 1,000 wake-ups per run; normal runs without that
+  environment variable do not write or collect jitter samples.
+- Because sensor reads and processing can overrun a 10 ms period under QEMU,
+  the measured path skips expired release deadlines before sleeping for the
+  next future absolute deadline. This prevents a late read from being counted
+  repeatedly as subsequent sleep-wakeup jitter. The number of skipped
+  deadlines is reported separately. Raw deadline increments are therefore
+  multiples of 10 ms, not necessarily exactly 10 ms.
+- Both policy runs exited successfully, recorded exactly 1,000 rows, and had
+  no early wake-ups. Independent checks verified every jitter_ns value equals
+  wakeup_ns - deadline_ns and the deadline increments are positive multiples
+  of 10 ms.
+- The guest reported memory locking enabled. It confirmed SCHED_FIFO priority
+  50 for one run and SCHED_OTHER priority 0 for the comparison run.
+
+Results (nanoseconds)
+---------------------
+Policy       N     Min       Average       Max         P99
+SCHED_FIFO   1000  419,000    5,861,285    10,033,000   9,883,000
+SCHED_OTHER  1000  249,000    5,730,478    10,571,000  10,024,000
+
+Histogram (DOCX bucket ranges; counts)
+--------------------------------------
+Bucket          SCHED_FIFO  SCHED_OTHER
+0-100 us                 0            0
+100-500 us               4            5
+500-1,000 us            20           25
+>1 ms                  976          970
+Negative/early           0            0
+
+Across each full 40-second app run, the Sensor Thread reported 2,742 overdue
+deadlines skipped in the FIFO run and 2,454 in the OTHER run. The raw CSV is
+limited to the first 1,000 wake-ups, whereas these skip counts cover the full
+run. The figures and deadline gaps show that the 10 ms work period was
+frequently overrun in the emulated workload. FIFO did not materially reduce
+the measured average jitter in this run; its P99 was about 141 us lower, while
+its minimum was higher. The data does not support a claim that FIFO
+consistently outperformed OTHER.
+
+Integration/regression checks
+-----------------------------
+- The direct-measurement QEMU run loaded the driver and ran the complete app
+  for 40 seconds under each policy. Both returned exit status 0, processed
+  sensor samples, generated alerts, and reported zero circular-buffer
+  overflows. See logs/task4_direct_sensor_qemu.txt and the raw CSV files.
+- After the instrumentation change, the ordinary default-mode QEMU integration
+  test also passed for 60 seconds: 119 samples processed, zero buffer overflow,
+  queue cleanup passed, and the driver unloaded successfully. Jitter collection
+  is opt-in and was not enabled in that default-mode run. See
+  logs/task4_default_mode_qemu.txt.
+- `make -C app host arm test` passed after the change.
+
+Interpretation and limitations
+------------------------------
+- The deadline is absolute and uses CLOCK_MONOTONIC; the wake-up timestamp is
+  taken before the sensor read and application processing. Expired deadlines
+  are skipped so this statistic measures lateness after the selected future
+  sleep deadline, not the duration of a sample's processing.
+- The guest kernel previously measured CLOCK_MONOTONIC resolution as 10 ms,
+  with CONFIG_HZ=100, CONFIG_PREEMPT_NONE=y, and no CONFIG_HIGH_RES_TIMERS.
+  Timer granularity is a major limit on interpretation, especially for values
+  below one tick.
+- QEMU TCG adds host scheduling and virtualization effects. Guest SCHED_FIFO
+  does not make the host QEMU process real-time. These measurements do not
+  establish hard real-time guarantees or predict physical ARM hardware.
+- FIFO and OTHER were run sequentially, not in randomized repeated order, and
+  no controlled competing-load sweep was performed. Host/QEMU load can affect
+  the results. The Sensor Thread blocks in absolute nanosleep rather than
+  busy-spinning.
+- High skipped-deadline counts indicate that the app's read/processing work
+  could not sustain the requested 10 ms cadence in this emulated run. This is
+  separate from the recorded wake-up jitter and should be considered when
+  interpreting the comparison.
+
+Evidence
+--------
+- logs/task4_direct_sensor_qemu.txt: boot, actual policy, application summaries,
+  jitter report, and embedded raw CSV sections for both policies.
+- logs/jitter_sensor_fifo.csv and logs/jitter_sensor_other.csv: extracted raw
+  CSV, each with a header and exactly 1,000 samples.
+- logs/task4_default_mode_qemu.txt: default-mode 60-second regression evidence.
+- logs/task4_rubric_results.txt: current rubric status.
+- logs/task4_direct_sensor_overrun_attempt.txt and
+  logs/task4_direct_sensor_initial_instrumentation.txt are superseded diagnostic
+  runs with accumulated lateness; they are not used for the results above.

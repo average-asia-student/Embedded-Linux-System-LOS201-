@@ -1,0 +1,44 @@
+LAB-03 Part A status (2026-11-04)
+
+A.2 - ARMv7 build: PASS
+- Command: arm-linux-gnueabihf-gcc -g -O0 -march=armv7-a -mfpu=neon-vfpv3 -mfloat-abi=hard
+- apps/buggy_app is an ARM EABI5 hard-float ELF with debug_info/debug_line and is not stripped.
+- The binary is also present at rootfs/initramfs/usr/bin/buggy_app.
+- Required runtime files are in rootfs/initramfs/lib.
+
+Debugger preparation: PASS for this LAB-03 run
+- Host GDB is staged at tools/host/usr/bin/gdb-multiarch; it reports architecture "arm".
+- ARM target gdbserver 17.1 is at rootfs/initramfs/usr/bin/gdbserver.
+- Its ARMhf package SHA-256 matched Ubuntu package metadata.
+- A sudo apt install attempt could not authenticate in this non-interactive session. No host package was installed; the verified .deb was extracted locally under tools/host instead.
+
+A.3 - Initramfs and QEMU boot: PASS
+- Use output/initramfs_lab3_gdb_runtime.cpio.gz; gzip test and archive contents check passed.
+- SHA-256: 29ed4f689db66a55697fbb4eee5b1723c9fe420d4083864f141f30046b61d400.
+- QEMU vexpress-a9 booted the LAB-01 zImage/DTB with this LAB-03 initramfs.
+- Serial evidence shows /sbin/init ran and the LAB-02 driver loaded successfully.
+- eth0 was configured at runtime as 10.0.2.15 for QEMU hostfwd; no Ubuntu network configuration was changed.
+
+A.4 - ARM gdbserver: PASS
+- In the guest, gdbserver --version reported GNU gdbserver 17.1 configured for arm-linux-gnueabihf.
+- gdbserver started /usr/bin/buggy_app and listened on port 1234.
+- The working endpoint was 0.0.0.0:1234; the documented shorthand :1234 failed name resolution in this environment.
+
+A.5 - Remote GDB debugging: PASS
+- Host GDB read symbols from apps/buggy_app and stopped at main, process_data, create_message, and calculate.
+- At the conditional breakpoint, len=5 and i=5; data[5] was read beyond the 5-element array.
+- Before free(buf), buf contained "Hello Embedded Linux"; after free, the same address contained changed allocator data. The returned pointer was assigned to msg and then inspected in main.
+- For a=100000 and b=100000, the 32-bit result was 1410065408 while the 64-bit product was 10000000000.
+- The inferior exited normally and GDB returned exit code 0.
+- The value observed for data[5] is undefined/out-of-bounds and is not a stable expected value.
+
+Primary evidence:
+- logs/part_a/build.log
+- logs/part_a/runtime_copy.log
+- logs/part_a/gdbserver_dependency_closure.log
+- logs/part_a/initramfs_gdb_runtime_build.log
+- logs/part_a/qemu_remote_session_verified.log
+- logs/part_a/gdb_remote_debug_verified.log
+- scripts/part_a_debug.gdb
+
+The verified QEMU run was stopped after the debug session. No LAB-01/LAB-02 files or Ubuntu boot/kernel configuration were changed.

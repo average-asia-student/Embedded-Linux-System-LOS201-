@@ -1,0 +1,55 @@
+LAB-03 Part B - Memory Leak Analysis
+Date: 2026-11-04
+
+HOST MEMCHECK
+Host compiler: GCC 15.2.0
+Valgrind used: 3.26.0, locally extracted from the official Ubuntu amd64 package under tools/host/valgrind. It was not installed system-wide.
+
+Leaky run (logs/part_b/valgrind_report.txt):
+- in use at exit: 16,900 bytes in 250 blocks
+- total heap usage: 352 allocs, 102 frees, 24,196 bytes allocated
+- definitely lost: 16,900 bytes in 250 blocks
+- indirectly lost: 0 bytes in 0 blocks
+- possibly lost: 0 bytes in 0 blocks
+- still reachable: 0 bytes in 0 blocks
+- ERROR SUMMARY: 3 errors from 3 contexts
+
+Allocation stacks:
+- 2,100 bytes in 100 blocks: malloc for Record.name at apps/leaky_app.c:19, called by main at line 73. delete_record frees the Record but not its name, so every name allocation loses its last pointer.
+- 2,000 bytes in 100 blocks: malloc for Record.scores at apps/leaky_app.c:21, called by main at line 73. delete_record frees the Record but not its scores array.
+- 12,800 bytes in 50 blocks: malloc for buf at apps/leaky_app.c:33, called by process_messages from main at line 81. The loop never frees buf.
+- All three categories are definitely lost in the actual run. indirectly lost is 0: the parent Record itself is freed, so its child pointers are not retained inside another leaked, allocated block for Memcheck to classify as an indirect leak.
+
+Fixed run (logs/part_b/valgrind_fixed.txt):
+- in use at exit: 0 bytes in 0 blocks
+- total heap usage: 352 allocs, 352 frees, 24,196 bytes allocated
+- All heap blocks were freed -- no leaks are possible
+- ERROR SUMMARY: 0 errors from 0 contexts
+- apps/leaky_app.c remains unchanged as the intentionally leaking version. apps/leaky_app_fixed.c is a separate corrected source.
+
+QEMU /proc measurement (logs/part_b/qemu_proc_measurement_final4.log):
+Both apps ran on the ARMv7 QEMU target and were sampled while held for 12 seconds. Values below are copied from /proc/PID/status:
+
+Variant             VmSize    VmRSS    VmData    VmStk
+leaky_app_arm       1680 kB   152 kB   196 kB   132 kB
+leaky_app_fixed_arm 1680 kB   152 kB   196 kB   132 kB
+
+The two VmRSS values are equal in this small test. This is the actual observation, not evidence that the leaky build is fixed: the deliberately leaked allocations total 16.9 kB, small relative to process mappings and RSS accounting/page granularity. /proc/maps for both processes shows the ARM executable, libc, loader, stack and heap. Memcheck provides the precise leak detection for this workload.
+
+Part B-only environment changes:
+- ARM binaries and the guest sampling script are in rootfs/initramfs_part_b, a separate copy used only for the Part B QEMU archive.
+- That copy's /etc/init.d/rcS mounts devtmpfs so /dev/null is available to BusyBox background jobs.
+- No Part A files, LAB-01/LAB-02 files, host package database, Ubuntu configuration, or kernel were modified.
+- Final Part B QEMU archive SHA-256: 9d3c3ba35fc09609d1ec71471e2a662c326fa5cc8457d124f480800df9649fe6.
+
+Primary files:
+- apps/leaky_app.c
+- apps/leaky_app_fixed.c
+- apps/leaky_app and apps/leaky_app_fixed
+- apps/leaky_app_arm and apps/leaky_app_fixed_arm
+- scripts/part_b_host.sh
+- scripts/part_b_proc_guest.sh
+- output/initramfs_lab3_part_b_proc_final4.cpio.gz
+- logs/part_b/valgrind_report.txt
+- logs/part_b/valgrind_fixed.txt
+- logs/part_b/qemu_proc_measurement_final4.log

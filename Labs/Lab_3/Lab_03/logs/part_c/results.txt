@@ -1,0 +1,103 @@
+LAB-03 Part C - Profiling results
+=================================
+
+Scope and evidence
+------------------
+- Part C only. Part A, Part B, LAB-01, and LAB-02 were not edited.
+- Host and ARM binaries include debug information and retain the
+  heavy_compute and linear_search symbols (see build_binaries.txt).
+- The ARM build explicitly targets ARMv7-A with VFP/NEON and hard-float.
+- The target prints a computed result and a search checksum; these are
+  observed outputs and show that the workload was executed.
+- The Part C initramfs is separate: output/initramfs_lab3_part_c.cpio.gz.
+  Its rootfs is rootfs/initramfs_part_c; Part A's initramfs was not changed.
+
+Workload verification
+---------------------
+Host default run:
+- array=100000, iterations=50, search_runs=1000, io_lines=10000.
+- Result: 11433083166.074631
+- Search checksum: 99999000
+- Exit status: 0; /usr/bin/time measured 0.02 s elapsed and 3492 KiB
+  maximum resident set size (logs/part_c/host_run.txt,
+  logs/part_c/host_time.txt).
+
+Host and QEMU ARM comparison run used identical bounded parameters:
+- array=100000, iterations=2, search_runs=20, io_lines=1000.
+- Both printed Result 457323326.642985 and Search result checksum 1999980.
+- The host verified 1000 output lines in /tmp/perf_test.txt. The QEMU guest
+  independently verified 1000 lines before shutdown.
+- Host scaled elapsed time rounded to 0.00 s by /usr/bin/time; this is below
+  its displayed precision and is not a useful performance measurement.
+- No guest wall-clock workload duration was collected. The strace syscall
+  time is not total application runtime and must not be used as a host-vs-ARM
+  speed comparison.
+
+strace observations
+-------------------
+Host summary (2/20/1000 workload): 57 syscalls, one failed call, 0.000535 s
+summed syscall time. Highest entries by measured syscall time were munmap
+(27.29%), mmap (26.17%), write (11.21%), and openat (10.28%).
+
+QEMU ARM guest summary for the same workload: 68 syscalls, seven failed calls,
+0.012424 s summed syscall time. Highest entries were write (15 calls,
+25.89%), openat (7 calls, 20.77%), munmap (6 calls, 14.62%), and mprotect
+(6 calls, 10.86%). The openat/statx failures are loader search probes for
+library/cache paths not present in this minimal rootfs; getrandom returned
+EAGAIN for a nonblocking request; this did not prevent successful program
+execution.
+
+Interpretation:
+- openat locates libraries and opens /tmp/perf_test.txt; write emits buffered
+  file and console output; close finalizes the output file.
+- mmap/mmap2, mprotect, and munmap are primarily dynamic-loader and process
+  memory setup/teardown activity. They do not measure the application's
+  compute hotspots.
+- strace measures system calls, not CPU instruction samples. Host and guest
+  syscall totals differ because of their libc/loader/runtime environments.
+  The traced times are not directly comparable as CPU performance metrics.
+- Full host and guest traces and both summary outputs are saved under
+  logs/part_c/.
+
+perf status
+-----------
+- Host /proc/sys/kernel/perf_event_paranoid was 4.
+- The bounded, unprivileged perf record attempt failed with exit status 255:
+  the kernel denied access to CPU and software performance events.
+- perf.data is 0 bytes; there is no valid perf recording and no perf report
+  or CPU hotspot can be claimed.
+- perf stat exited 0 but reported CPU counters as "<not supported>"; those
+  counters are not measurements. The target did run, as shown in
+  perf_stat_stdout.txt.
+- The user approved a sudo perf attempt. The command could not authenticate
+  because this execution environment requires an interactive terminal
+  (sudo: A terminal is required to authenticate). Root perf access therefore
+  remains untested; the failure is not evidence that the kernel blocks root.
+- No package installation or host perf configuration change was made.
+- No ARM perf executable was staged in the Part C guest; perf CPU profiling
+  in QEMU is therefore not claimed.
+
+Files/evidence
+--------------
+- Source: apps/perf_target.c
+- Build/run scripts: scripts/part_c_host.sh and scripts/part_c_qemu.py
+- Exact compiler commands: logs/part_c/build_commands.txt
+- Host compile, workload, strace and perf attempt logs: logs/part_c/
+- ARM runtime: rootfs/initramfs_part_c/ and
+  output/initramfs_lab3_part_c.cpio.gz
+- Host tool versions and perf permission: logs/part_c/tooling.txt
+- QEMU serial transcript with boot, full guest trace, summary and 1000-line
+  check: logs/part_c/qemu_arm_strace.log
+- Host full trace: logs/part_c/strace_full.txt
+- Host summary: logs/part_c/strace_summary.txt
+- Host file/read/write trace: logs/part_c/strace_filtered.txt
+- Perf limitations: logs/part_c/perf_report.txt and perf_stat.txt
+
+Completion
+----------
+Completed and verified: host/ARM build, observable workload, host strace,
+ARMv7 QEMU boot, guest strace, and output-file line-count checks.
+Not completed: privileged perf recording, perf counters, perf report, and CPU
+hotspot identification. The unprivileged attempts were blocked by
+perf_event_paranoid=4; the approved sudo attempt could not authenticate
+without a TTY, so privileged event access has not been tested.

@@ -1,0 +1,117 @@
+LAB-03 Part D - Real-Time Latency Analysis
+==========================================
+
+Scope and tools
+---------------
+- Measurements were run on the Ubuntu host, not QEMU, as required by the lab.
+- Installed rt-tests 2.9-1ubuntu1 and stress-ng 0.20.01-1 after user approval.
+- cyclictest version: 2.80.
+- Before installation cyclictest was not present. The installed `rtla`
+  timerlat utility also required root for a short unprivileged histogram
+  probe; the failed probe is retained in rtla_unprivileged_probe.txt.
+- Kernel: Linux 7.0.0-38-generic, x86_64; host has 12 online CPUs.
+- Kernel config has CONFIG_PREEMPT_DYNAMIC=y, CONFIG_PREEMPTION=y and
+  CONFIG_PREEMPT_RT is not enabled. This is the current generic/dynamic
+  preemption kernel, not a PREEMPT_RT kernel.
+- The kernel config and tool availability checks are in
+  kernel_config.txt and environment.txt;
+  exact capture-time kernel/policy data is in measurement_environment.txt.
+- All cyclictest runs exited 0; the stress-ng run completed successfully in
+  30.01 seconds with zero failed workers. See measurement_status.txt and
+  stress_ng.txt.
+
+Baseline histogram run
+----------------------
+Command parameters: 4 threads, FIFO priority 80, 1000 us interval, requested
+500 us thread distance, 10,000 loops, mlockall, histogram range 200 us.
+The cyclictest output warns: "distance is ignored and set to 0, if histogram
+enabled." Therefore the measured histogram run used same-phase threads; do
+not describe this histogram run as having 500 us thread staggering.
+
+For threads 0-3 respectively:
+  Min latency (us): 2, 2, 2, 2
+  Avg latency (us): 6, 5, 4, 4
+  Max latency (us): 124, 42, 103, 32
+  Histogram overflows: 0, 0, 0, 0
+Histogram bin counts are exactly 10,000 per thread. Raw data:
+  cyclictest_standard.txt
+  hist_standard.txt
+
+Separate 500 us distance run
+----------------------------
+Because histogram mode disables distance, an additional 10,000-loop
+non-histogram run measured the requested 500 us spacing:
+  T0: Min 2, Avg 6, Max 1124 us, C=10000
+  T1: Min 2, Avg 6, Max 48 us, C=6675
+  T2: Min 2, Avg 7, Max 73 us, C=5007
+  T3: Min 2, Avg 8, Max 56 us, C=4005
+Exit status: 0. This separate run is not merged with the histogram or used
+as an identical-condition comparison.
+
+Histogram under bounded CPU/I/O stress
+--------------------------------------
+stress-ng ran 4 CPU workers and 2 I/O workers for 30.01 seconds. The
+simultaneous cyclictest histogram run used 4 FIFO threads, priority 80,
+1000 us interval, 30,000 loops, mlockall, and histogram range 200 us.
+Again, cyclictest warned that histogram mode ignores the requested 500 us
+distance; threads were same-phase.
+
+For threads 0-3 respectively:
+  Min latency (us): 2, 2, 2, 1
+  Avg latency (us): 10, 7, 7, 5
+  Max latency (us): 1038, 963, 113, 728
+  Samples above the 200 us histogram range: 1, 3, 0, 1
+The in-range bin counts plus overflow samples sum to 30,000 per thread.
+Exit statuses for stress-ng and cyclictest were zero. Raw data:
+  cyclictest_stress.txt
+  hist_stress.txt
+  stress_ng.txt
+
+The measured maximum latency rose substantially under the synthetic
+CPU/I/O load for three of four threads, and the histogram recorded overflows
+above 200 us. This is an observation from this single bounded run on this
+host, not a hard-real-time guarantee or a general benchmark result. The
+stress-ng log notes that all 12 CPUs use the powersave governor; no governor
+or other system setting was changed.
+
+The cyclictest output does not provide a separate missed-deadline/overrun
+counter in these runs. Histogram overflow is a latency sample above the
+200-us histogram range; it is not itself an overrun count. Do not equate the
+two metrics.
+
+Both histogram runs also printed `# /dev/cpu_dma_latency set to 0us`.
+cyclictest requested a low idle-exit latency while each measurement process
+was active; no persistent device, governor, sysctl, or kernel setting was
+changed.
+
+Histogram visualization
+-----------------------
+latency_histogram.png plots the actual baseline and stress histogram bins
+from 0-200 us in separate panels. The stress panel separately annotates
+per-thread overflow sample counts and measured maxima, including values
+outside the plotted range. It was generated from the saved raw histogram
+files by scripts/part_d_plot.py using the already installed Pillow library.
+
+Interpretation and PREEMPT_RT
+-----------------------------
+These are measurements from the current CONFIG_PREEMPT_DYNAMIC generic
+kernel only. No PREEMPT_RT measurement was made because no RT kernel was
+booted or installed, and kernel/boot configuration was not changed.
+
+Theory only: PREEMPT_RT typically makes more kernel execution preemptible,
+threads many interrupt handlers, uses priority-inheritance-aware sleeping
+locks for many formerly non-preemptible lock paths, and reduces long
+non-preemptible sections. These mechanisms can reduce scheduling and
+interrupt-related latency tails, but do not imply zero latency or guarantee
+deadlines on arbitrary hardware/workloads. No numeric RT improvement is
+claimed from these measurements.
+
+Part C status and preservation
+------------------------------
+Part C results/logs were preserved. Its perf record/report remains
+incomplete: the unprivileged attempt was blocked by perf_event_paranoid=4,
+and the approved sudo attempt could not authenticate in the non-interactive
+execution environment. No Part C CPU hotspot is claimed or fabricated.
+
+No LAB-01 or LAB-02 content was changed. No kernel, bootloader, sysctl, CPU
+governor, or persistent security configuration was changed for Part D.
